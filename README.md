@@ -1,3 +1,11 @@
+# snake-game-ai
+
+## CS3206 Artifical Intelligence Assignment 1 - Search
+
+Authors:
+1. Nicholas Lee Choon Sin
+2. Cheong Kenwg Son
+
 # Setup
 
 1. Download this repository OR clone this repository to your machine.
