@@ -1,0 +1,610 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="./frontend/icon.png" type="image/x-icon" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.9.55/css/materialdesignicons.min.css" rel="stylesheet">
+  <style>
+    .collapsed { transform: scale(0); }
+    .expanded { transform: scale(1); }
+    .collapsed-y { transform: scaleY(0); }
+    .expanded-y { transform: scaleY(1); }
+    .origin-top { transform-origin: top; }
+    .origin-bottom { transform-origin: bottom; }
+    .maze-pad { fill-opacity: 10%; }
+    .snake-food { fill: #10B981; } 
+    .snake-10 { fill: #FDF2F8; }
+    .snake-20 { fill: #FCE7F3; }
+    .snake-30 { fill: #FBCFE8; }
+    .snake-40 { fill: #F9A8D4; }
+    .snake-50 { fill: #F472B6; }
+    .snake-60 { fill: #EC4899; }
+    .snake-70 { fill: #DB2777; }
+    .snake-80 { fill: #BE185D; }
+    .snake-90 { fill: #9D174D; }
+    .snake-100 { fill: #831843; }
+    .snake-dot-dir-10 { fill: #831843; }
+    .snake-dot-dir-20 { fill: #9D174D; }
+    .snake-dot-dir-30 { fill: #BE185D; }
+    .snake-dot-dir-40 { fill: #DB2777; }
+    .snake-dot-dir-50 { fill: #EC4899; }
+    .snake-dot-dir-60 { fill: #F472B6; }
+    .snake-dot-dir-70 { fill: #F9A8D4; }
+    .snake-dot-dir-80 { fill: #FBCFE8; }
+    .snake-dot-dir-90 { fill: #FCE7F3; }
+    .snake-dot-dir-100 { fill: #FDF2F8; }
+    .max-h-perc-10 { max-height: 10%; }
+    .max-h-perc-20 { max-height: 20%; }
+    .max-h-perc-30 { max-height: 30%; }
+    .max-h-perc-40 { max-height: 40%; }
+    .max-h-perc-50 { max-height: 50%; }
+    .max-h-perc-60 { max-height: 60%; }
+    .max-h-perc-70 { max-height: 70%; }
+    .max-h-perc-80 { max-height: 80%; }
+    .max-h-perc-90 { max-height: 90%; }
+  </style>
+</head>
+<body>
+  <div id="app" class="h-screen w-screen flex divide-x p-2">
+    <!-- popup overlay -->
+    <overlay class="transition-opacity duration-500" :class="overlay.gameControls ? 'visible opacity-100' : 'invisible opacity-0'"
+      dialog-class="h-auto w-3/4 p-4 max-h-perc-90 flex flex-col"  
+      @bg-click="overlay.gameControls = false"
+    >
+      <div class="border-b mb-3 flex flex-row flex-0 text-2xl pb-2">
+        <span class="flex-1">Game controls</span>
+        <button class="mdi mdi-close" @click="overlay.gameControls = false"></button>
+      </div>
+      <div class="overflow-auto flex-1 flex flex-col">
+        <button-with-label icon="mdi-account-outline">Human</button-with-label>
+        <div class="ml-5">Snake is controlled with keyboard. Click to switch to agent mode.</div>
+        <div class="text-center">
+          <svg viewBox="-50 -48 150 100" width="200px" class="inline">
+            <text text-anchor="start" dominant-baseline="middle" x="0" y="0">&#9666;</text>
+            <text text-anchor="middle" dominant-baseline="text-top" x="24" y="16">&#9662;</text>
+            <text text-anchor="end" dominant-baseline="middle" x="48" y="0">&#9656;</text>
+            <text text-anchor="middle" dominant-baseline="mathematical" x="24" y="-16">&#9652;</text>
+            <text text-anchor="middle" dominant-baseline="text-top" x="24" y="-20">north</text>
+            <text text-anchor="middle" dominant-baseline="mathematical" x="24" y="20">south</text>
+            <text text-anchor="end" dominant-baseline="middle" x="0" y="0">west</text>
+            <text text-anchor="start" dominant-baseline="middle" x="48" y="0">east</text>
+          </svg>
+        </div>
+        <hr class="my-3">
+        <button-with-label icon="mdi-robot-outline">Agent</button-with-label>
+        <div class="ml-5">Snake is controlled by AI agent. Click to switch to human mode. Select the agent from dropdown list.</div>
+        <hr class="my-3">
+        <select-with-action class="w-1/3" label="Choose player"
+          action-icon="mdi-sync" 
+          :options="[{name: 'player1'}, {name: 'player2'}]"
+          value="player1"
+          value-key="name"
+          display-key="name"
+        ></select-with-action>
+        <div class="ml-5">Only available in <i class="mdi mdi-robot-outline"></i>. Select agent from dropdown list. Click <button-only icon="mdi-sync" style="display:inline" class="w-10"></button-only> to refresh list of agents.</div>
+        <hr class="my-3">
+        <button-with-label icon="mdi-play-outline">Paused</button-with-label>
+        <div class="ml-5">Game is paused or uninitiated. Click to start or resume the game. Keyboard shortcut: <kbd>P</kbd></div>
+        <div class="ml-5">[<i class="mdi mdi-account-outline"></i>] The game starts with snake moving at x steps per second as configured. Keyboard controls for snake direction are enabled.</div>
+        <div class="ml-5">[<i class="mdi mdi-robot-outline"></i>] The selected agent is initialised. The latest game states are sent to the agent. The game waits for solution and search tree from the agent.</div>
+        <hr class="my-3">
+        <button-with-label icon="mdi-pause">Playing</button-with-label>
+        <div class="ml-5">Game is running. Click to pause the game. Keyboard shortcut: <kbd>P</kbd></div>
+        <div class="ml-5">[<i class="mdi mdi-account-outline"></i>] The game is paused at that instance. Arrow keys cannot be used to change the direction.</div>
+        <div class="ml-5">[<i class="mdi mdi-robot-outline"></i>] The game is paused after receiving the solution from the agent. Upon resuming, only then the latest game states are sent to the agent.</div>
+        <hr class="my-3">
+        <button-with-label icon="mdi-refresh">Reset</button-with-label>
+        <div class="ml-5">Click to reset the game. Keyboard shortcut: <kbd>R</kbd></div>
+        <div class="ml-5">[<i class="mdi mdi-account-outline"></i>] The game states are reset.</div>
+        <div class="ml-5">[<i class="mdi mdi-robot-outline"></i>] The game states are reset.</div>
+        <hr class="my-3">
+        <button-with-label icon="mdi-chevron-right">Step-by-step</button-with-label>
+        <div class="ml-5">Only available in <i class="mdi mdi-robot-outline"></i>. The game will only proceed when <text-button class="p-1" style="display:inline">Next step</text-button> is clicked. Click to switch to automatic progression.</div>
+        <hr class="my-3">
+        <button-with-label icon="mdi-chevron-triple-right">Automatic progression</button-with-label>
+        <div class="ml-5">Only available in <i class="mdi mdi-robot-outline"></i>. The game will automatically proceed when solution is received from agent. Click to switch to step by step progression.</div>
+        <hr class="my-3">
+        <div class="mx-1">Moving speed: <b>x</b> step per second</div>
+        <div class="flex flex-row">
+          <input type="range" class="flex-1 mx-1 p-1" min="0" max="100"/>
+          <div class="flex-1"></div>
+          <div class="flex-1"></div>
+        </div>
+        <div class="ml-5">Only available in <i class="mdi mdi-account-outline"></i>. Snake will progress with x step per second.</div>
+        <div class="ml-5">At 0 step per second, snake will move one step for each valid keyboard input.</div>
+        <hr class="my-3">
+        <div class="mx-1">Animation speed: <b>x</b> step per second</div>
+        <div class="flex flex-row">
+          <input type="range" class="flex-1 mx-1 p-1" min="0" max="100"/>
+          <div class="flex-1"></div>
+          <div class="flex-1"></div>
+        </div>
+        <div class="ml-5">Only available in <i class="mdi mdi-robot-outline"></i>. This controls the animation speed of the snake when solution is provided by the agent.</div>
+        <hr class="my-3">
+        <button-with-label icon="mdi-family-tree">Show search trees</button-with-label>
+        <div class="ml-5">Only available in <i class="mdi mdi-robot-outline"></i>. Click to show the search tree generated by the agent during the search for solution.</div>
+      </div>
+    </overlay>
+    <!-- search tree overlay -->
+    <overlay class="transition-opacity duration-500 p-10" :class="overlay.searchTrees ? 'visible opacity-100' : 'invisible opacity-0'"
+      dialog-class="h-full w-full p-4 flex flex-col"  
+      @bg-click="overlay.searchTrees = false">
+      <div class="border-b mb-3 flex flex-row flex-0 text-2xl pb-2">
+        <span class="flex-1">Solutions and search trees</span>
+        <button class="mdi mdi-close" @click="overlay.searchTrees = false"></button>
+      </div>
+      <div class="mb-2 flex flex-row justify-center">Step {{ selectedPlayer.historyDisplay + 1 }}</div>
+      <div class="flex-1 flex flex-row items-stretch overflow-auto">
+        <button class="flex-none mdi mdi-chevron-left flex flex-row items-center px-2 m-1" 
+          :disabled="selectedPlayer.historyDisplay <= 0" 
+          :class="selectedPlayer.historyDisplay <= 0 ? 'text-gray-300' : ''"
+          @click="selectedPlayer.historyDisplay -= 1"></button>
+        <div class="flex-1 flex flex-col">
+          <div class="flex-1 flex flex-row overflow-auto">
+            <!-- state -->
+            <div class="flex-1 flex flex-row justify-center">
+              <svg class="w-full max-h-full" :view-box.camel="getMazeViewBox(...selectedPlayer.setup.maze_size)" v-if="selectedPlayer.states.length > 0">
+                <rect v-for="(loc,i) in getMazePadLoc(...selectedPlayer.setup.maze_size)" :key="`box-${i}`" :x="loc[0]" :y="loc[1]" :width="mazeSettings.unit" :height="mazeSettings.unit" class="maze-pad"></rect>
+                <circle v-for="(loc,i) in selectedPlayer.states[selectedPlayer.historyDisplay].food_locations" :key="`food-${i}`" :cx="getCoord(loc[0])" :cy="getCoord(loc[1])" :r="snakeDotR" class="snake-food"></circle>
+                
+                <circle v-for="(loc,i) in selectedPlayer.states[selectedPlayer.historyDisplay].snake_locations" :key="`snake-dot-${i}`" :cx="getCoord(loc[0])" :cy="getCoord(loc[1])" :r="snakeDotR" :class="`snake-${getSnakeColor(selectedPlayer.states[selectedPlayer.historyDisplay].snake_locations.length,i)}`"></circle>
+        
+                <svg v-for="(dotdir,i) in getSnakeDotDirs(selectedPlayer.states[selectedPlayer.historyDisplay].snake_locations, selectedPlayer.states[selectedPlayer.historyDisplay].current_direction)" 
+                  :key="`snake-dot-dir-${i}`" 
+                  :x="getCoord(selectedPlayer.states[selectedPlayer.historyDisplay].snake_locations[i][0])-snakeDotDirScale*snakeDotR" 
+                  :y="getCoord(selectedPlayer.states[selectedPlayer.historyDisplay].snake_locations[i][1])-snakeDotDirScale*snakeDotR" 
+                  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" :width="2*snakeDotDirScale*snakeDotR" :height="2*snakeDotDirScale*snakeDotR">
+                  <path fill="none" d="M0 0h24v24H0z"/>
+                  <path :class="`snake-dot-dir-${getSnakeColor(selectedPlayer.states[selectedPlayer.historyDisplay].snake_locations.length,i)}`" v-if="dotdir == 'n'" d="M12 10.828l-4.95 4.95-1.414-1.414L12 8l6.364 6.364-1.414 1.414z"/>
+                  <path :class="`snake-dot-dir-${getSnakeColor(selectedPlayer.states[selectedPlayer.historyDisplay].snake_locations.length,i)}`" v-if="dotdir == 's'" d="M12 13.172l4.95-4.95 1.414 1.414L12 16 5.636 9.636 7.05 8.222z"/>
+                  <path :class="`snake-dot-dir-${getSnakeColor(selectedPlayer.states[selectedPlayer.historyDisplay].snake_locations.length,i)}`" v-if="dotdir == 'e'" d="M13.172 12l-4.95-4.95 1.414-1.414L16 12l-6.364 6.364-1.414-1.414z"/>
+                  <path :class="`snake-dot-dir-${getSnakeColor(selectedPlayer.states[selectedPlayer.historyDisplay].snake_locations.length,i)}`" v-if="dotdir == 'w'" d="M10.828 12l4.95 4.95-1.414 1.414L8 12l6.364-6.364 1.414 1.414z"/>
+                </svg>
+              </svg>
+            </div>
+            <!-- search tree -->
+            <div class="flex-1 overflow-auto relative flex flex-col">
+              <div class="flex-1 overflow-auto">
+                <search-tree ref="stsvg"  v-if="selectedPlayer.searchTrees.length > 0" :width="`${searchTreeWidthPercentage.current}%`" :tree="selectedPlayer.searchTrees[selectedPlayer.historyDisplay]"></search-tree>
+              </div>
+              <div class="p-1 text-xl self-center">
+                <button class="mdi mdi-magnify-minus-outline p-1" @click="searchTreeWidthPercentage.current = Math.max(searchTreeWidthPercentage.min, searchTreeWidthPercentage.current - 5)"></button>
+                <button class="mdi mdi-magnify-remove-outline p-1" @click="searchTreeWidthPercentage.current = 100"></button>
+                <button class="mdi mdi-magnify-plus-outline p-1" @click="searchTreeWidthPercentage.current = Math.min(searchTreeWidthPercentage.max, searchTreeWidthPercentage.current + 5)"></button>
+              </div>
+            </div>
+          </div>
+          <!-- solution -->
+          <div class="flex-none text-center flex flex-row overflow-auto justify-center">
+            <span v-for="sol,si in selectedPlayer.solutions[selectedPlayer.historyDisplay]"
+              :key="si"
+              :class="sol == 'n' ? 'mdi-chevron-up' : sol == 's' ? 'mdi-chevron-down' : sol == 'w' ? 'mdi-chevron-left' : sol == 'e' ? 'mdi-chevron-right' : 'mdi-help'"
+              class="text-2xl mx-2 mdi"
+            ></span>
+          </div>
+        </div>
+        <button class="flex-none mdi mdi-chevron-right flex flex-row items-center px-2 m-1"
+          :disabled="selectedPlayer.historyDisplay >= selectedPlayer.solutions.length - 1" 
+          :class="selectedPlayer.historyDisplay >= selectedPlayer.solutions.length - 1 ? 'text-gray-300' : ''"
+          @click="selectedPlayer.historyDisplay += 1"></button>
+      </div>
+    </overlay>
+    <!-- content -->
+    <div class="flex-1 h-full p-5">
+      <svg style="width:100%;height:100%" :view-box.camel="getMazeViewBox(settings.saved.mazeRow,settings.saved.mazeCol)">
+        <rect v-for="(loc,i) in getMazePadLoc(settings.saved.mazeRow,settings.saved.mazeCol)" :key="`box-${i}`" :x="loc[0]" :y="loc[1]" :width="mazeSettings.unit" :height="mazeSettings.unit" class="maze-pad"></rect>
+        <circle v-for="(loc,i) in foodLocations" :key="`food-${i}`" :cx="getCoord(loc[0])" :cy="getCoord(loc[1])" :r="snakeDotR" class="snake-food"></circle>
+        
+        <circle v-for="(loc,i) in snakeLocations" :key="`snake-dot-${i}`" :cx="getCoord(loc[0])" :cy="getCoord(loc[1])" :r="snakeDotR" :class="`snake-${getSnakeColor(snakeLocations.length,i)}`"></circle>
+
+        <svg v-for="(dotdir,i) in getSnakeDotDirs(snakeLocations, moveDir)" 
+          :key="`snake-dot-dir-${i}`" 
+          :x="getCoord(snakeLocations[i][0])-snakeDotDirScale*snakeDotR" 
+          :y="getCoord(snakeLocations[i][1])-snakeDotDirScale*snakeDotR" 
+          xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" :width="2*snakeDotDirScale*snakeDotR" :height="2*snakeDotDirScale*snakeDotR">
+          <path fill="none" d="M0 0h24v24H0z"/>
+          <path :class="`snake-dot-dir-${getSnakeColor(snakeLocations.length,i)}`" v-if="dotdir == 'n'" d="M12 10.828l-4.95 4.95-1.414-1.414L12 8l6.364 6.364-1.414 1.414z"/>
+          <path :class="`snake-dot-dir-${getSnakeColor(snakeLocations.length,i)}`" v-if="dotdir == 's'" d="M12 13.172l4.95-4.95 1.414 1.414L12 16 5.636 9.636 7.05 8.222z"/>
+          <path :class="`snake-dot-dir-${getSnakeColor(snakeLocations.length,i)}`" v-if="dotdir == 'e'" d="M13.172 12l-4.95-4.95 1.414-1.414L16 12l-6.364 6.364-1.414-1.414z"/>
+          <path :class="`snake-dot-dir-${getSnakeColor(snakeLocations.length,i)}`" v-if="dotdir == 'w'" d="M10.828 12l4.95 4.95-1.414 1.414L8 12l6.364-6.364 1.414 1.414z"/>
+        </svg>
+
+        <rect v-if="failed" 
+          :x="getMazeViewBox(settings.saved.mazeRow,settings.saved.mazeCol)[0]" 
+          :y="getMazeViewBox(settings.saved.mazeRow,settings.saved.mazeCol)[1]" 
+          :width="getMazeViewBox(settings.saved.mazeRow,settings.saved.mazeCol)[2]" 
+          :height="getMazeViewBox(settings.saved.mazeRow,settings.saved.mazeCol)[3]" style="opacity:0.5" fill="white"></rect>
+        <svg v-if="failed && failedFace==0" id="sad-but-relieved-face" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" style="opacity:0.5">
+          <g id="color">
+            <path fill="#FCEA2B" d="M12,36c0,13.2336,10.7664,24,24,24c13.2337,0,24-10.7664,24-24c0-13.2337-10.7663-24-24-24 C22.7664,12,12,22.7663,12,36z"/>
+            <path fill="#92D3F5" d="M14.7403,47.3629L14.7403,47.3629c-1.6949,2.2577-1.2388,5.4736,1.0185,7.1717 c2.1832,1.643,5.5249,1.1714,7.1704-1.0168c2.6272-3.4938,2.6947-7.8469,2.5394-10.6081 C22.7721,43.5279,17.369,43.8689,14.7403,47.3629z"/>
+          </g>
+          <g id="hair"/>
+          <g id="skin"/>
+          <g id="skin-shadow"/>
+          <g id="line">
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M25.1656,56.2934C28.394,58.0206,32.0826,59,36,59c12.7025,0,23-10.2975,23-23S48.7025,13,36,13S13,23.2975,13,36 c0,2.0737,0.2744,4.0832,0.7889,5.9944"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M41,31.0774c0.4132,0.344,2.2456,1.7915,4.9091,1.6364c2.1608-0.1259,3.61-1.2333,4.0909-1.6364"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M23,31.0774c0.4132,0.344,2.2456,1.7915,4.9091,1.6364c2.1608-0.1259,3.61-1.2333,4.0909-1.6364"/>
+            <path fill="none" stroke="#000000" stroke-miterlimit="10" stroke-width="2" d="M18.9757,55.0045 c1.3489-0.0915,2.5814-0.7028,3.4702-1.7214c2.9266-3.3525,2.5576-9.3267,2.5405-9.5792 c-0.0356-0.5252-0.4899-0.9214-1.0148-0.8858c-0.2529,0.0172-6.2222,0.4585-9.1501,3.811H14.821 c-1.833,2.1017-1.6153,5.3044,0.486,7.1383C16.3235,54.6568,17.6268,55.096,18.9757,55.0045z"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M42,46c-1.2841-0.6376-3.9847-1.0308-6.8421-0.9981C32.5344,45.0319,30.1682,45.4165,29,46"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M51.1367,26.3462c-1.7485,0.552-3.6373,0.4369-5.3048-0.3243c-1.7477-0.5852-3.2117-1.8029-4.1098-3.4111"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M20.8998,26.3355c3.6145,0.9881,7.4488-0.5261,9.413-3.7176"/>
+          </g>
+        </svg>
+        <svg v-if="failed && failedFace==1" id="crying-face" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" style="opacity:0.5">
+          <g id="color">
+            <path fill="#FCEA2B" d="M36.2002,13.3163c-12.5719,0-22.7998,10.2279-22.7998,22.7998c0,12.5718,10.2279,22.7998,22.7998,22.7998 C48.772,58.9159,59,48.6879,59,36.1161C59,23.5442,48.772,13.3163,36.2002,13.3163z"/>
+            <path fill="#92D3F5" d="M22.7747,33.8245c-1.0767,1.1019-3.115,3.4878-3.2924,5.9164c-0.1111,1.521,1.1185,2.9431,2.6365,3.0534 c1.5693,0.1143,2.9388-1.0681,3.0546-2.6364l0,0C25.3503,37.7287,23.6798,35.0718,22.7747,33.8245z"/>
+          </g>
+          <g id="hair"/>
+          <g id="skin"/>
+          <g id="skin-shadow"/>
+          <g id="line">
+            <circle cx="36" cy="36" r="23" fill="none" stroke="#000000" stroke-miterlimit="10" stroke-width="2"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M26.5,48c1.8768-3.8326,5.8239-6.1965,10-6c3.8343,0.1804,7.2926,2.4926,9,6"/>
+            <path fill="none" stroke="#000000" stroke-miterlimit="10" stroke-width="2" d="M20.3869,41.6299 c-0.5326-0.5326-0.8258-1.2405-0.8256-1.9936c0-2.4789,2.3433-4.8508,2.443-4.9505c0.2074-0.2074,0.5431-0.2072,0.7503,0 c0.0998,0.0998,2.4432,2.4718,2.4437,4.9512l0.0002,0.0002c-0.0007,1.5535-1.2653,2.8177-2.8189,2.8175 C21.6273,42.4556,20.9195,42.1624,20.3869,41.6299z"/>
+            <path d="M30,31c0,1.6568-1.3448,3-3,3c-1.6553,0-3-1.3433-3-3c0-1.6552,1.3447-3,3-3C28.6552,28,30,29.3448,30,31"/>
+            <path d="M48,31c0,1.6568-1.3447,3-3,3s-3-1.3433-3-3c0-1.6552,1.3447-3,3-3S48,29.3448,48,31"/>
+          </g>
+        </svg>
+        <svg v-if="failed && failedFace==2" id="crying-cat" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" style="opacity:0.5">
+          <g id="color">
+            <path fill="#F4AA41" d="M58.6655,48.8322c-3.5976,9.1169-12.6313,15.1546-23.2072,15.1546c-9.1173,0-19.256-5.8476-22.8536-14.9645 l-0.1262-0.3127c-1.1415-2.8597-0.9573-6.3599-0.9573-9.6324L15.1881,6.706l10.2281,10.0799 c2.9226-1.2477,6.137-1.9388,9.5103-1.9388H35.99c3.3733,0,6.5877,0.6911,9.5103,1.9388L56.7285,5.706l3.7223,33.8758 c0,3.2725-0.6283,6.3969-1.7707,9.2566"/>
+            <path fill="#E27022" d="M35.4583,63.9868c10.6088,0.3425,20.3541-6.004,23.9517-15.1208l0.1109-0.231 c1.1415-2.8597,0.9579-6.8965,0.9579-10.169l-3.7503-32.76"/>
+            <path fill="#FFFFFF" d="M55.1059,33.527c0,0-9.2757-9.2767-13.2519,6.6249C52.4561,48.1032,55.1059,33.527,55.1059,33.527z"/>
+            <path fill="#FFFFFF" d="M16.8941,33.527c0,0,9.2757-9.2767,13.2519,6.6249C19.5439,48.1032,16.8941,33.527,16.8941,33.527z"/>
+            <path fill="#92D3F5" d="M20.92,48.1939c-1.1993,1.4205-3.4442,4.4727-3.4442,7.4143c-0.0014,0.9206,0.3576,1.7853,1.0068,2.4345 c0.6507,0.6507,1.5153,1.0097,2.4375,1.0098c1.8413-0.0001,3.4457-1.6044,3.4443-3.4443l0,0 C24.3643,52.6666,22.1193,49.6145,20.92,48.1939z"/>
+          </g>
+          <g id="hair"/>
+          <g id="skin"/>
+          <g id="skin-shadow"/>
+          <g id="line">
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M64,55.1642"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M55.1059,33.4851c0,0-9.2757-9.2767-13.2519,6.6249C52.4561,48.0613,55.1059,33.4851,55.1059,33.4851z"/>
+            <line x1="62" x2="52.64" y1="53.9235" y2="48.7235" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M52.64,46.6435"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M10,51.8435"/>
+            <line x1="57.84" x2="48.48" y1="59.1235" y2="53.9235" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M46.4,54.9635"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M55.76,60.1635"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M13.2916,47.7952c-1.1172-2.7655-1.7316-5.787-1.7316-8.9517l3.64-32.76l10.9799,10.7149c2.858-1.2066,6.0013-1.8749,9.3001-1.8749 h1.04c3.2988,0,6.4421,0.6683,9.3001,1.8749L56.8,6.0835l3.64,32.76c0,3.1647-0.6144,6.1862-1.7316,8.9517"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M27.004,61.4549C29.6388,62.4535,32.4956,63,35.4802,63h1.04c4.6465,0,8.9852-1.3243,12.6547-3.6176"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M16.8941,33.4851c0,0,9.2757-9.2767,13.2519,6.6249C19.5439,48.0613,16.8941,33.4851,16.8941,33.4851z"/>
+            <line x1="10" x2="18.7195" y1="53.9235" y2="49.0793" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M19.36,46.6435"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M10,51.8435"/>
+            <line x1="16.01" x2="14.16" y1="58.0909" y2="59.1209" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M25.6,54.9635"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M16.24,60.1635"/>
+            <circle cx="23.52" cy="36.2435" r="2.08"/>
+            <circle cx="48.48" cy="36.2435" r="2.08"/>
+            <path d="M24.8268,59.473c-1.0428,1.0428-2.4302,1.6172-3.9068,1.6173c-1.4765,0-2.864-0.5746-3.9082-1.6187 c-1.0428-1.0428-1.6173-2.4302-1.6159-3.9053c0-4.8605,4.5933-9.5084,4.7887-9.7038c0.4065-0.4064,1.0643-0.4064,1.4708,0 c0.1953,0.1953,4.7887,4.8432,4.7886,9.7037l0,0C26.4455,57.0413,25.871,58.4289,24.8268,59.473z M20.92,48.152 c-1.1993,1.4205-3.4442,4.4727-3.4442,7.4143c-0.0014,0.9206,0.3576,1.7853,1.0068,2.4345 c0.6507,0.6507,1.5153,1.0097,2.4375,1.0098c1.8413-0.0001,3.4457-1.6044,3.4443-3.4443l0,0 C24.3643,52.6247,22.1193,49.5726,20.92,48.152z"/>
+            <line x1="40.16" x2="36" y1="52.08" y2="46.88" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <line x1="31.84" x2="36" y1="52.08" y2="46.88" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <line x1="31.84" x2="40.16" y1="46.88" y2="46.88" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+          </g>
+        </svg>
+        <svg v-if="failed && failedFace==3" id="loud-crying-face" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" style="opacity:0.5">
+          <g id="line-supplement">
+            <path fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="m52 52.38c0.8775-1.631 1-5.38 1-7.38 0-4-4-11-4-11"/>
+            <path fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="m44 36s3 6.728 3 10c0 3.065-1 8-1 10"/>
+            <path fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="m20 52.4c-0.8775-1.631-1-5.4-1-7.4 0-4 4-11 4-11"/>
+            <path fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="m28 36s-3 6.728-3 10c0 3.065 1 8 1 10"/>
+          </g>
+          <g id="color">
+            <path fill="#FCEA2B" d="m36.2 13.32c-12.57 0-22.8 10.23-22.8 22.8 0 12.57 10.23 22.8 22.8 22.8 12.57 0 22.8-10.23 22.8-22.8 0-12.57-10.23-22.8-22.8-22.8z"/>
+            <path fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="0.1" d="m35.93 51.58c-2.461 0-4.742-2.368-4.742-4.987 0-2.619 2.444-4.66 4.905-4.66s4.701 2.205 4.701 4.823c-1e-6 2.619-2.403 4.823-4.864 4.823z"/>
+            <path fill="#fff" stroke-linejoin="round" stroke-width="2" d="m31.37 45.29c2.025 1.288 7.318 1.288 9.26 0l-4.63-4.005z"/>
+            <path fill="#92d3f5" d="m29.7 32.02c-5.762 9.541-3.86 14.27-3.696 23.98 0 1.803-5.146-2.412-6-4-2.17-5.92-0.3989-13.81 2.5-19.18 2.887-1.622 6.992-2.084 7.196-0.8031z"/>
+            <path fill="#92d3f5" d="m42.3 32.4c5.762 9.541 3.86 14.27 3.696 23.98 0 1.803 5.146-2.412 6-4 2.17-5.92 0.3989-13.81-2.5-19.18-2.887-1.622-6.992-2.084-7.196-0.8031z"/>
+          </g>
+          <g id="hair"/>
+          <g id="skin"/>
+          <g id="skin-shadow"/>
+          <g id="line">
+            <path fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="m40.5 32.82c0.4132-0.344 2.246-1.792 4.909-1.636 2.161 0.1259 3.61 1.233 4.091 1.636"/>
+            <path fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="m22.5 32.82c0.4132-0.344 2.246-1.792 4.909-1.636 2.161 0.1259 3.61 1.233 4.091 1.636"/>
+            <circle cx="36" cy="36" r="23" fill="none" stroke="#000" stroke-miterlimit="10" stroke-width="2"/>
+            <circle cx="36" cy="46.6" r="4.759" fill="none" fill-rule="evenodd" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+          </g>
+        </svg>
+        <svg v-if="failed && failedFace==4" id="dizzy-face" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" style="opacity:0.5">
+          <g id="color">
+            <path fill="#FCEA2B" d="M36,13c-12.6823,0-23,10.3177-23,23c0,12.6822,10.3177,23,23,23c12.6822,0,23-10.3178,23-23 C59,23.3177,48.6822,13,36,13z"/>
+          </g>
+          <g id="hair"/>
+          <g id="skin"/>
+          <g id="skin-shadow"/>
+          <g id="line">
+            <circle cx="36" cy="36" r="23" fill="none" stroke="#000000" stroke-miterlimit="10" stroke-width="2"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M29.5,43c1.2841-0.6376,3.9847-1.0308,6.8421-0.9981c2.6235,0.03,4.9897,0.4146,6.1579,0.9981"/>
+            <line x1="47.5" x2="42.5" y1="29" y2="33" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <line x1="42.5" x2="47.5" y1="29" y2="33" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <line x1="29.5" x2="24.5" y1="29" y2="33" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <line x1="24.5" x2="29.5" y1="29" y2="33" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+          </g>
+        </svg>
+        <svg v-if="failed && failedFace==5" id="weary-cat" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" style="opacity:0.5">
+          <g id="color">
+            <path fill="#F4AA41" d="M58.3627,49.2828c-3.5496,8.9951-12.4626,14.8105-22.8972,14.8105 c-8.9955,0-18.9987-5.6278-22.5483-14.6229l-0.1245-0.3085c-1.1262-2.8215-0.9311-6.2749-0.9311-9.5037l3.6179-31.9254 l10.0781,9.9318c2.8836-1.231,6.055-1.9129,9.3833-1.9129h1.0493c3.3283,0,6.4997,0.6818,9.3833,1.9129L56.4516,6.7328 l3.6726,33.4233c0,3.2288-0.6199,6.3115-1.7471,9.1329"/>
+            <path fill="#E27022" d="M35.4655,64.0933c10.4671,0.3379,20.0822-5.782,23.6318-14.7771l0.1094-0.2279 c1.1262-2.8215,0.9317-6.8043,0.9317-10.0331L56.4516,6.7328"/>
+            <ellipse cx="36" cy="51.7194" rx="6.4518" ry="7.7514" fill="#EA5A47"/>
+            <ellipse cx="24.4558" cy="34.194" rx="7.7513" ry="6.4517" transform="matrix(0.3339 -0.9426 0.9426 0.3339 -15.9415 45.8287)" fill="#FFFFFF"/>
+            <ellipse cx="46.8396" cy="34.1948" rx="6.4517" ry="7.7513" transform="matrix(0.9426 -0.3339 0.3339 0.9426 -8.7295 17.6024)" fill="#FFFFFF"/>
+            <path fill="#F4AA41" d="M15.2952,65h9.0343c0,0,1.3738-13.3688,0-15.8101c-0.9984-1.7742-2.5479-5.2709-6.8527-5.1379 c-1.5576,0.0481-6.0111,1.347-4.7097,5.2514c1.8131,5.4394,3.4222,4.5051,4.2929,6.1777C18.2042,57.6789,15.2952,65,15.2952,65z"/>
+            <path fill="#F4AA41" d="M56.3242,65h-9.0343c0,0-1.3738-13.3688,0-15.8101c0.9984-1.7742,2.5479-5.2709,6.8527-5.1379 c1.5577,0.0481,6.0111,1.347,4.7097,5.2514c-1.8131,5.4394-3.4222,4.5051-4.2929,6.1777C53.4152,57.6789,56.3242,65,56.3242,65z"/>
+          </g>
+          <g id="hair"/>
+          <g id="skin"/>
+          <g id="skin-shadow"/>
+          <g id="line">
+            <line x1="61.65" x2="57.61" y1="54.4498" y2="52.1998" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M52.4177,47.264"/>
+            <line x1="57.55" x2="54.34" y1="59.5798" y2="57.7998" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M46.2611,55.4728"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M55.496,60.6033"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M12.92,46.4798c0,0-0.01-0.01,0-0.01c-0.67-2.19-1.03-4.5-1.03-6.9l3.59-32.32l10.83,10.57c2.82-1.19,5.92-1.85,9.18-1.85h1.02 c3.26,0,6.36,0.66,9.18,1.85l10.83-10.57l3.59,32.32c0,2.59-0.41,5.07-1.19,7.4"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M24.7,60.5598c3.23,1.67,6.9,2.61,10.79,2.61h1.02c3.75,0,7.28-0.87,10.43-2.42"/>
+            <line x1="14.1" x2="10.35" y1="52.3598" y2="54.4498" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M19.5823,47.264"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M10.3474,52.3945"/>
+            <line x1="17.25" x2="14.45" y1="58.0198" y2="59.5798" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M25.7389,55.4728"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M16.504,60.6033"/>
+            <ellipse cx="36" cy="51.7194" rx="6.4518" ry="7.7514" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <ellipse cx="24.4558" cy="34.194" rx="7.7513" ry="6.4517" transform="matrix(0.3339 -0.9426 0.9426 0.3339 -15.9415 45.8287)" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <ellipse cx="46.8396" cy="34.1948" rx="6.4517" ry="7.7513" transform="matrix(0.9426 -0.3339 0.3339 0.9426 -8.7295 17.6024)" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M15.2952,65h9.0343c0,0,1.3738-13.3688,0-15.8101c-0.9984-1.7742-2.5479-5.2709-6.8527-5.1379 c-1.5576,0.0481-6.0111,1.347-4.7097,5.2514c1.8131,5.4394,3.4222,4.5051,4.2929,6.1777C18.2042,57.6789,15.2952,65,15.2952,65z"/>
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M56.3242,65h-9.0343c0,0-1.3738-13.3688,0-15.8101c0.9984-1.7742,2.5479-5.2709,6.8527-5.1379 c1.5577,0.0481,6.0111,1.347,4.7097,5.2514c-1.8131,5.4394-3.4222,4.5051-4.2929,6.1777C53.4152,57.6789,56.3242,65,56.3242,65z"/>
+          </g>
+        </svg>
+        <svg v-if="failed && failedFace==6" id="skull" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" style="opacity:0.5">
+          <g id="color">
+            <path fill="#FFFFFF" d="M41.1835,14.216c-1.6784-0.5099-3.4229-0.7694-5.177-0.77h-0.036c-1.2518,0.0041-2.5,0.1334-3.726,0.386 c-4.3415,0.9348-8.1984,3.4083-10.859,6.964c-2.0244,2.6542-3.3639,5.7662-3.9,9.061c-1.0764,6.1694,0.6871,12.4953,4.8,17.218 l0.133,0.149c1.055,1.19,2.5,2.82,2.5,4.554l-0.022,4.988c0,0.5523-0.4477,1-1,1l0,0c2.2224,1.1344,4.5781,1.9863,7.012,2.536 c3.8115,0.8585,7.7771,0.7502,11.536-0.315C45.6595,44.81,44.8105,28.958,41.1835,14.216z"/>
+            <path fill="#D0CFCE" d="M48.8895,18.863c-2.1471-2.1598-4.794-3.7563-7.706-4.648c3.627,14.742,4.476,30.595,1.258,45.766 c1.9461-0.5441,3.8246-1.3059,5.6-2.271c-0.5501,0.0023-1.0009-0.436-1.014-0.986l-0.069-4.943c0-1.65,1.4-3.191,2.421-4.317 c0.145-0.159,0.283-0.311,0.407-0.453c7.0513-8.1923,6.6643-20.4171-0.891-28.147L48.8895,18.863z"/>
+            <path fill="#3F3F3F" d="M27.8635,36.364c-2.4853,0-4.5,2.0147-4.5,4.5s2.0147,4.5,4.5,4.5s4.5-2.0147,4.5-4.5 S30.3488,36.364,27.8635,36.364z"/>
+            <path fill="#3F3F3F" d="M44.2115,36.364c-2.4853,0-4.5,2.0147-4.5,4.5s2.0147,4.5,4.5,4.5s4.5-2.0147,4.5-4.5 S46.6968,36.364,44.2115,36.364z"/>
+          </g>
+          <g id="hair"/>
+          <g id="skin"/>
+          <g id="skin-shadow"/>
+          <g id="line">
+            <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M48.0235,56.664 l-0.069-4.944c0-1.45,1.649-3.035,2.58-4.1c3.4344-3.9474,5.3151-9.0097,5.291-14.242c0-11.6-8.894-21.006-19.856-20.983 c-1.3183,0.0041-2.6329,0.1405-3.924,0.407c-7.89,1.618-14.177,8.457-15.548,16.842c-1.1269,6.4665,0.7263,13.0961,5.043,18.041 c0.917,1.037,2.382,2.62,2.382,4.04l-0.022,4.983"/>
+            <line x1="27.8645" x2="27.8645" y1="55.002" y2="59.782" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            <line x1="33.5785" x2="33.5785" y1="56.067" y2="60.848" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            <line x1="44.2125" x2="44.2125" y1="55.002" y2="59.782" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            <line x1="39.0275" x2="39.0275" y1="56.067" y2="60.848" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            <polyline fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" points="33.0365,52.209 35.9685,46.36 39.4735,52.209"/>
+            <circle cx="27.8645" cy="40.817" r="5" fill="none" stroke="#000000" stroke-miterlimit="10" stroke-width="2"/>
+            <circle cx="44.2125" cy="40.817" r="5" fill="none" stroke="#000000" stroke-miterlimit="10" stroke-width="2"/>
+          </g>
+        </svg>                                                
+      </svg>
+    </div>
+    <div class="flex-none w-1/4 h-full flex flex-col p-2 item-stretch">
+      <!-- points -->
+      <div class="w-full flex-none flex flex-col border-b">
+        <div class="text-gray-100 p-1 bg-gray-500">Accummulated points</div>
+        <div class="text-4xl text-center">{{ accPoints }}</div>
+      </div>
+      <!-- controls -->
+      <div class="w-full flex-none text-gray-100 p-1 cursor-pointer flex flex-row bg-gray-500" @click="showControls = !showControls">
+        <span class="flex-1">Controls</span>
+        <i :class="showControls ? 'mdi-chevron-down' : 'mdi-chevron-left'" class="mdi"></i>
+      </div>
+      <div class="w-full overscroll-contain overflow-auto flex flex-col border-b transition-all origin-top" :class="showControls ? 'flex-1 expanded-y' : 'flex-0 h-0 collapsed-y'">
+        <!-- control buttons -->
+        <text-button @click="overlay.gameControls = true"><i class="mdi mdi-help-circle-outline"></i>&nbsp;Info for game controls</text-button>
+        <button-with-label 
+          :icon="controls.manual ? 'mdi-account-outline' : 'mdi-robot-outline'"
+          @click="controls.manual=!controls.manual">
+          {{ controls.manual ? 'Human' : 'Agent' }}
+        </button-with-label>
+        <select-with-action label="Choose player" 
+          v-model="selectedPlayer.folder" 
+          :disabled="controls.manual" 
+          action-icon="mdi-sync" 
+          @action="getPlayerList"
+          :options="playerList"
+          value-key="folder"
+          display-key="name"
+        ></select-with-action>
+        <button-with-label 
+          :icon="controls.play ? 'mdi-pause' : 'mdi-play-outline'"
+          @click="controls.play=!controls.play">
+          {{ controls.play ? 'Playing' : 'Paused' }}
+          <i v-if="controls.play" class="ml-1 absolute mdi mdi-loading animate-spin"></i>
+        </button-with-label>
+        <button-with-label 
+          :disabled="controls.play"
+          icon="mdi-refresh"
+          @click="initialiseGame">
+          Reset
+        </button-with-label>
+        <button-with-label :disabled="controls.manual || failed"
+          :icon="controls.stepping ? 'mdi-chevron-right' : 'mdi-chevron-triple-right'"
+          @click="controls.stepping=!controls.stepping">
+          {{ controls.stepping ? 'Step-by-step' : 'Automatic progression' }}
+        </button-with-label>
+        <text-button :disabled="controls.manual || !controls.stepping || controls.animation.id || failed || !controls.play || !selectedPlayer.initiated" @click="nextAgentStep">Next step</text-button>
+        <div class="pt-1 mx-1" :class="controls.play ? 'text-gray-300' : ''">{{ controls.manual ? 'Moving' : 'Animation' }} speed: <span class="font-bold">{{ controls.manual ? controls.interval.current : controls.animation.current }}</span> step per second</div>
+        <div class="flex flex-row pb-1">
+          <input v-if="controls.manual" type="range" :disabled="controls.play" class="flex-1 mx-1 p-1" v-model="controls.interval.current" min="0" :max="controls.interval.max"/>
+          <input v-else type="range"  :disabled="controls.play" class="flex-1 mx-1 p-1" v-model="controls.animation.current" min="1" :max="controls.animation.max"/>
+        </div>
+        <button-with-label :disabled="controls.manual || selectedPlayer.states.length <= 0"
+          icon="mdi-family-tree"
+          @click="overlay.searchTrees = true">
+          Show search trees
+        </button-with-label>
+        
+      </div>
+      <!-- settings -->
+      <div class="w-full flex-none text-gray-100 p-1 cursor-pointer flex flex-row bg-gray-500" @click="showControls = !showControls">
+        <span class="flex-1">Game Settings</span> 
+        <i :class="!showControls ? 'mdi-chevron-down' : 'mdi-chevron-left'" class="mdi"></i>
+      </div>
+      <div class="w-full overscroll-contain overflow-auto flex flex-col relative border-b transition-all origin-bottom" :class="showControls ? 'flex-0 h-0 collapsed' : 'flex-1 expanded'">
+        <div class="absolute bottom-0 w-full flex flex-row p-1 bg-red-500" v-if="settingsModified">
+          <div class="text-gray-100 flex-1">Save modified settings? Game will be reset.</div>
+          <button-only icon="mdi-check" class="flex-none mr-1 w-8 bg-gray-100" @click="saveSettings"></button-only>
+          <button-only icon="mdi-close" class="flex-none text-black w-8 bg-gray-100" @click="discardSettings"></button-only>
+        </div>
+        <div class="pt-1 mx-1">Maze size</div>
+        <div class="flex flex-row h-10 mx-1 mb-1 items-center">
+          <input type="number" v-model.number="settings.displayed.mazeRow" class="flex-1 w-0 border p-1" min="1">
+          <div class="flex-none mx-2">&times;</div>
+          <input type="number" v-model.number="settings.displayed.mazeCol" class="flex-1 w-0 border p-1" min="1">
+        </div>
+        <button-with-label class="pt-2"
+          :icon="settings.displayed.staticLength ? 'mdi-dots-horizontal' : 'mdi-pan-horizontal'"
+          @click="settings.displayed.staticLength=!settings.displayed.staticLength">
+          {{ settings.displayed.staticLength ? 'Fixed snake length' : 'Dynamic snake length' }}
+        </button-with-label>
+        <div class="pt-1 mx-1">Starting snake length</div>
+        <div class="flex flex-row h-10 mx-1 mb-1">
+          <input type="number" v-model.number="settings.displayed.startLength" class="flex-1 w-0 border p-1" min="1">
+        </div>
+        <div class="pt-1 mx-1">Food number</div>
+        <div class="flex flex-row h-10 mx-1 mb-1">
+          <input type="number" v-model.number="settings.displayed.foodNumber" class="flex-1 w-0 border p-1" min="1">
+        </div>
+      </div>
+      <!-- log -->
+      <div class="w-full flex-none text-gray-100 p-1 flex flex-row bg-gray-500">
+        <span class="flex-1">Logs</span>
+        <button class="mdi mdi-chat-remove-outline" @click="logs.splice(0,logs.length)"></button>
+        <button class="ml-2 mdi" :class="showLogs ? 'mdi-eye-off-outline' : 'mdi-eye-outline'" @click="showLogs=!showLogs"></button>
+      </div>
+      <div class="w-full flex-1 overscroll-contain overflow-auto divide-y flex flex-col" ref="logs">
+        <div v-for="(log,logidx) in logs" :key="logidx" class="p-1" v-if="showLogs" ref="log">
+          {{ log }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <template id="button-only">
+    <button class="border flex flex-row justify-center items-center" :class="disabled ? 'text-gray-300' : ''" @click="$emit('click')" :disabled="disabled">
+      <span :class="icon" class="mdi"></span>
+    </button>
+  </template>
+
+  <template id="text-button">
+    <div class="flex flex-row items-center p-1 h-12 items-stretch" :class="disabled ? 'text-gray-300' : ''">
+      <button class="border flex-1 flex flex-row justify-center items-center" @click="$emit('click')" :class="buttonClass">
+        <slot></slot>
+      </button>
+    </div>
+  </template>
+
+  <template id="button-with-label">
+    <div class="flex flex-row items-center p-1 h-12" :class="disabled ? 'text-gray-300' : ''">
+      <button class="flex-none w-10 flex flex-row justify-center h-full items-center border" @click="$emit('click')" :disabled="disabled">
+        <span :class="icon" class="mdi"></span>
+      </button>
+      <div class="flex-1 pl-1"><slot></slot></div>
+    </div>
+  </template>
+
+  <template id="select-with-action">
+    <div class="flex flex-row items-center p-1 h-12" :class="disabled ? 'text-gray-300' : ''">
+      <select :label="label" class="h-full flex-1 border" :value="value" @input="$emit('input', $event.target.value)" :disabled="disabled">
+        <option v-for="item,i in options" :key="i" :value="item[valueKey]">{{ item[displayKey] }}</option>
+      </select>
+      <button-only :icon="actionIcon" class="w-10 h-full ml-1" :disabled="disabled" @click="$emit('action')"></button-only>
+    </div>
+  </template>
+
+  <template id="overlay">
+    <div class="absolute top-0 left-0 h-full w-full flex flex-row p-1 bg-gray-500 bg-opacity-70 justify-center items-center z-50" @click.self="$emit('bg-click')">
+      <div class="bg-white rounded" :class="dialogClass">
+        <slot></slot>
+      </div>
+    </div>
+  </template>
+
+  <template id="search-tree-template">
+    <svg :width="width" :view-box.camel="view_box">
+      <svg:style>
+        .expseq { font: normal 10px sans-serif; }
+      </svg:style>
+      <template v-for="layer,l in tree_array.slice(0,tree_array.length-1)">
+        <template v-for="node,n in layer.flat(2)">
+          <!-- node frame -->
+          <rect :key="'node-'+l+'-'+n" 
+            :x="node_x[l][n]"
+            :y="l*(node_height+link_height)"
+            :width="node_width"
+            :height="node_height"
+            v-if="!(node < 1)"
+            stroke="gray"
+            fill="white"
+          ></rect>
+          <!-- node text -->
+          <text v-if="!(node < 1)" :key="'nodelabel-'+l+'-'+n"
+            :x="node_x[l][n] + .5*node_width"
+            :y="l*(node_height+link_height) + .5*node_height"
+            font-weight="thin"
+            :font-size="`${font_size.state}px`"
+            dominant-baseline="middle" text-anchor="middle"
+          >{{ node.state }}</text>
+          <!-- expansion sequence -->
+          <text v-if="!(node < 1) && (node.expansionsequence > 0)" :key="'nodelabel-expseq-'+l+'-'+n"
+            :x="node_x[l][n] + .5*node_width + .75*node_width"
+            :y="l*(node_height+link_height) + .5*node_height"
+            font-weight="thin"
+            dominant-baseline="middle" text-anchor="middle"
+            class="expseq"
+          >{{ node.expansionsequence }}</text>
+          <!-- expansion sequence frame -->
+          <circle v-if="!(node < 1) && (node.expansionsequence > 0)"  :key="'nodelabel-expseq-circle-'+l+'-'+n"
+            :cx="node_x[l][n] + .5*node_width + .75*node_width"
+            :cy="l*(node_height+link_height) + .5*node_height"
+            :r=".2*node_width"
+            fill="none"
+            stroke="#009688"
+          ></circle>
+          <!-- removed -->
+          <line v-if="node.removed" stroke="red" stroke-width="3"
+            :x1="node_x[l][n] - .1*node_width"
+            :y1="l*(node_height+link_height) - .1*node_height"
+            :x2="node_x[l][n] + node_width + .1*node_width" 
+            :y2="l*(node_height+link_height) + node_height + .1*node_height"
+          ></line>
+          <line v-if="node.removed" stroke="red" stroke-width="3"
+            :x1="node_x[l][n] + node_width + .1*node_width"
+            :y1="l*(node_height+link_height) - .1*node_height"
+            :x2="node_x[l][n] - .1*node_width" 
+            :y2="l*(node_height+link_height) + node_height + .1*node_height"
+          ></line>
+          <!-- connection -->
+          <line v-if="(l > 0) && !(node < 1)" :key="'link-'+l+'-'+n" 
+            :x1="linkage[l-1][n].parent_loc+.5*node_width"
+            :y1="(l-1)*(node_height+link_height)+node_height"
+            :x2="linkage[l-1][n].child_loc+.5*node_width"
+            :y2="l*(node_height+link_height)"
+            stroke="gray"
+          />
+          <!-- actions -->
+          <text v-if="(l > 0) && !(node < 1)" :key="'linklabel-'+l+'-'+n"
+            :x="(linkage[l-1][n].parent_loc+linkage[l-1][n].child_loc)/2 + .5*node_width"
+            :y="l*(node_height+link_height) - .5*link_height"
+            stroke="white"
+            stroke-width=".5pt"
+            font-weight="900"
+            :font-size="`${font_size.action}px`"
+            dominant-baseline="middle" text-anchor="middle"
+          >{{ linkage[l-1][n].label }}</text>
+        </template>
+      </template>
+    </svg>
+  </template>
+
+  <script src="./frontend/index.js"></script>
+</body>
+</html>

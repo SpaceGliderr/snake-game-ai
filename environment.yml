@@ -1,0 +1,11 @@
+name: snake-game
+channels:
+  - conda-forge
+  - anaconda
+  - defaults
+dependencies:
+  - fastapi
+  - uvicorn
+  - pip
+  - aiofiles
+prefix: E:\Windows\Applications\Anaconda\envs\snake-game
