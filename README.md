@@ -6,6 +6,10 @@ Authors:
 1. Nicholas Lee Choon Sin
 2. Cheong Kenwg Son
 
+Note to Collaborators:
+![image](https://user-images.githubusercontent.com/46506221/115586317-0d64c480-a2ff-11eb-820e-b2cb00192b7a.png)
+_When prompted with the above image, please do not setup anything yet. It will mess with the environment._
+
 # Setup
 
 1. Download this repository OR clone this repository to your machine.
