@@ -4,7 +4,7 @@
 
 Authors:
 1. Nicholas Lee Choon Sin
-2. Cheong Keng Son
+2. Cheong Kenwg Son
 3. Adrian Ching Liansheng
 4. Ng Wei Jinn
 
