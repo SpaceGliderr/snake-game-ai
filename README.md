@@ -4,7 +4,9 @@
 
 Authors:
 1. Nicholas Lee Choon Sin
-2. Cheong Kenwg Son
+2. Cheong Keng Son
+3. Adrian Ching Liansheng
+4. Ng Wei Jinn
 
 Note to Collaborators:
 ![image](https://user-images.githubusercontent.com/46506221/115586317-0d64c480-a2ff-11eb-820e-b2cb00192b7a.png)
