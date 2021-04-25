@@ -2,8 +2,8 @@ from solution.helpers.node_class import Node
 
 class BFS:
     def __init__(self, initial_state, goal_state, state_space=None, maze_size=None):
-        self.initial_state = initial_state
-        self.goal_state = goal_state
+        self.initial_state = initial_state[0]
+        self.goal_state = goal_state # Can have multiple goal states
         self.state_space = self.initStateSpace(state_space, maze_size)
 
 
@@ -17,18 +17,53 @@ class BFS:
         return state_space
 
 
+    def getPotentialNeighbours(self, coord):
+        up = [coord[0], coord[1] + 1]
+        down = [coord[0], coord[1] - 1]
+        left = [coord[0] - 1, coord[1]]
+        right = [coord[0] + 1, coord[1]]
+
+        return up, down, left, right
+
+
     def expandAndReturnChildren(self, node):
+        # Will return neighbouring nodes
         children = []
 
-        for [m, n, c] in self.state_space:
-            # To check whether the last element of leaf_node equals any of the nodes in the state_space
-            if m == node.state:
-                # This defines the child as the current state and the parent is the node.state
-                children.append(Node(n, node.state))
-            elif n == node.state:
-                children.append(Node(m, node.state))
+        # [up, down, left, right] = getPotentialNeighbours(node.state)
+
+        for coord in self.getPotentialNeighbours(node.state):
+            if coord in self.state_space:
+                children.append(Node(coord, node.state))
+
+        # for coord in self.state_space:
+        #     if coord == node.state:
+        #         children.append(Node(coord, node.state))
+            # # To check whether the last element of leaf_node equals any of the nodes in the state_space
+            # if m == node.state:
+            #     # This defines the child as the current state and the parent is the node.state
+            #     children.append(Node(n, node.state))
+            # elif n == node.state:
+            #     children.append(Node(m, node.state))
 
         return children
+
+
+    def recreateSolutionPath(self, solution):
+        solution_actions = []
+        for idx, coord in enumerate(solution):
+            if idx != len(solution) - 1:
+                resultant_coord = [solution[idx + 1][0] - coord[0], solution[idx + 1][1] - coord[1]]
+                if resultant_coord == [0, 1]:
+                    solution_actions.append('s')
+                elif resultant_coord == [0, -1]:
+                    solution_actions.append('n')
+                elif resultant_coord == [-1, 0]:
+                    solution_actions.append('w')
+                elif resultant_coord == [1, 0]:
+                    solution_actions.append('e')
+
+        return solution_actions
 
 
     def bfs(self):
@@ -44,7 +79,7 @@ class BFS:
         # Where BFS begins
         while not found_goal:
             # Get the children paths of the first frontier element
-            children = self.expandAndReturnChildren(self.state_space, frontier[0])
+            children = self.expandAndReturnChildren(frontier[0])
             frontier[0].addChildren(children)
             # Put the first element of the frontier to the explored array
             explored.append(frontier[0])
@@ -57,7 +92,7 @@ class BFS:
                 # Meaning that it has not been explored at all
                 if not (child.state in [e.state for e in explored]) and not (child.state in [f.state for f in frontier]):
                     # Goal test
-                    if child.state == self.goal_state:
+                    if child.state in self.goal_state:
                         found_goal = True
                         # Goalie is the goal node
                         goalie = child
@@ -69,7 +104,6 @@ class BFS:
             print("Children: ", [c.state for c in children])
 
         solution = [goalie.state]
-        path_cost = 0
         # Loop through to find the entire solution path
         while goalie.parent is not None:
             # Insert the parent before the child in the array
@@ -81,4 +115,7 @@ class BFS:
                     goalie = e
                     break
 
-        return solution
+        print("SOLUTION >>>>> ", solution)
+        print("ACTIONS >>>>> ", self.recreateSolutionPath(solution))
+
+        return self.recreateSolutionPath(solution)

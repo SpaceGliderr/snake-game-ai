@@ -28,9 +28,9 @@ class Player():
     print("SETUP >>>> ", self.setup)
     print("PROBLEM >>>> ", problem)
     bfs = BFS(problem['snake_locations'], problem['food_locations'], maze_size=self.setup['maze_size'])
-    print("BFS >>>> ", bfs.state_space)
+    print("BFS >>>> ", bfs.bfs())
 
-    solution = []
+    solution = bfs.bfs()
 
     # Array of actions
     directions = "nswe"
@@ -38,8 +38,8 @@ class Player():
     # it randomly generates solution that is invalid
     # its purpose is to show you how this class will work
     # not a guide to how to write your algorithm
-    solution = [random.choice(directions) for step in range(random.randint(1,10))]
-    print("SOLUTION >>>> ", solution)
+    # solution = [random.choice(directions) for step in range(random.randint(1,10))]
+    # print("SOLUTION >>>> ", solution)
     # the following search tree is a static search tree 
     # to show you the format of the variable 
     # to generate a search tree that can be displayed in the frontend.
