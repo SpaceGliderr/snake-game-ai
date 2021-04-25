@@ -3,6 +3,7 @@ from solution.helpers.node_class import Node
 class BFS:
     def __init__(self, initial_state, goal_state, state_space=None, maze_size=None):
         self.initial_state = initial_state[0]
+        self.snake_body = initial_state
         self.goal_state = goal_state # Can have multiple goal states
         self.state_space = self.initStateSpace(state_space, maze_size)
 
@@ -33,7 +34,7 @@ class BFS:
         # [up, down, left, right] = getPotentialNeighbours(node.state)
 
         for coord in self.getPotentialNeighbours(node.state):
-            if coord in self.state_space:
+            if coord in self.state_space and coord not in self.snake_body:
                 children.append(Node(coord, node.state))
 
         # for coord in self.state_space:
