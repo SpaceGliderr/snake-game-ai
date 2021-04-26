@@ -30,6 +30,26 @@ class AStar:
         return state_space
 
 
+    def prioritiseGoalStates(self, goal_states):
+        # Scuffed piece of code to prio states, please find an alternative
+        distances = []
+        for goal_state in goal_states:
+            distances.append(self.calculateManhattanDistance(self.initial_state, goal_state))
+
+        # Thank you Stack Overflow <3
+        # https://stackoverflow.com/questions/6618515/sorting-list-based-on-values-from-another-list
+        prioritised = [dist for _, dist in sorted(zip(distances, goal_states))]
+        print("PRIORITISED >>>>>>>> ", prioritised)
+
+        return prioritised
+
+    def calculateManhattanDistance(self, coord1, coord2):
+        # We will use Manhattan Distance to calculate the h(n) value
+        x1, y1 = coord1
+        x2, y2 = coord2
+        return abs(x1 - x2) + abs(y1 - y2)
+
+
     def getPotentialNeighbours(self, coord):
         up = [coord[0], coord[1] + 1]
         down = [coord[0], coord[1] - 1]
