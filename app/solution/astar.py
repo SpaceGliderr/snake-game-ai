@@ -63,21 +63,9 @@ class AStar:
         # Will return neighbouring nodes
         children = []
 
-        # [up, down, left, right] = getPotentialNeighbours(node.state)
-
         for coord in self.getPotentialNeighbours(node.state):
             if coord in self.state_space and coord not in self.snake_body:
                 children.append(Node(coord, node.state))
-
-        # for coord in self.state_space:
-        #     if coord == node.state:
-        #         children.append(Node(coord, node.state))
-            # # To check whether the last element of leaf_node equals any of the nodes in the state_space
-            # if m == node.state:
-            #     # This defines the child as the current state and the parent is the node.state
-            #     children.append(Node(n, node.state))
-            # elif n == node.state:
-            #     children.append(Node(m, node.state))
 
         return children
 
@@ -99,15 +87,14 @@ class AStar:
         return solution_actions
 
 
-    def bfs(self):
+    def astar(self):
         frontier = []
         explored = []
         found_goal = False
         goalie = Node()
 
-        # `frontier` variable needs to append Node class
-        # This is because the frontier will be storing an array of yet to visit Node states
-        frontier.append(Node(self.initial_state, None))
+        # Initial state g cost will be 0 since it's the start node
+        frontier.append(Node(self.initial_state, None, 0, self.calculateManhattanDistance(self.initial_state, )))
 
         # Where BFS begins
         while not found_goal:
