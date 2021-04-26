@@ -1,5 +1,6 @@
 import random
 from solution.bfs import BFS
+from solution.astar import AStar
 
 class Player():
   name = "testing player"
@@ -27,10 +28,15 @@ class Player():
 
     print("SETUP >>>> ", self.setup)
     print("PROBLEM >>>> ", problem)
-    bfs = BFS(problem['snake_locations'], problem['food_locations'], maze_size=self.setup['maze_size'])
-    print("BFS >>>> ", bfs.bfs())
+    # bfs = BFS(problem['snake_locations'], problem['food_locations'], maze_size=self.setup['maze_size'])
+    # print("BFS >>>> ", bfs.bfs())
 
-    solution = bfs.bfs()
+    astar = AStar(problem['snake_locations'], problem['food_locations'], maze_size=self.setup['maze_size'])
+    print("AStar >>>> ", astar.astar())
+
+    # solution = bfs.bfs()
+
+    solution = astar.astar()
 
     # Array of actions
     directions = "nswe"
