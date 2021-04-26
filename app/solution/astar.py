@@ -1,4 +1,16 @@
-from solution.helpers.node_class import Node
+from math import abs
+
+class Node:
+    def __init__(self, state=None, parent=None, g=None, h=None, f=None):
+        self.state = state
+        self.parent = parent
+        self.children = []
+        self.g = g
+        self.h = h
+        self.f = f
+
+    def addChildren(self, children):
+        self.children.extend(children)
 
 class AStar:
     def __init__(self, initial_state, goal_state, state_space=None, maze_size=None):
