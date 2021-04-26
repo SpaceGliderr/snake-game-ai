@@ -66,8 +66,10 @@ class AStar:
         children = []
 
         for coord in self.getPotentialNeighbours(node.state):
-            if coord in self.state_space and coord not in self.snake_body:
-                children.append(Node(coord, node.state))
+            # Removed this line: and coord not in self.snake_body first
+            # Trying to find the first solution first before attempting the 2nd and 3rd questions
+            if coord in self.state_space:
+                children.append(AStarNode(coord, node.state))
 
         return children
 
@@ -93,18 +95,27 @@ class AStar:
         frontier = []
         explored = []
         found_goal = False
-        goalie = Node()
+        goalie = AStarNode()
 
         # Initial state g cost will be 0 since it's the start node
-        frontier.append(Node(self.initial_state, None, 0, self.calculateManhattanDistance(self.initial_state, )))
+        # Takes the first goal node because it is the closest based on estimated cost
+        initial_h = self.calculateManhattanDistance(self.initial_state, self.goal_state[0])
+        frontier.append(AStarNode(self.initial_state, None, 0, initial_h, 0 + initial_h))
 
         # Where BFS begins
         while not found_goal:
+            # Goal test before expansion
+            if frontier[0].state == self.goal_state[0]:
+                goalie = frontier[0]
+                break
+
             # Get the children paths of the first frontier element
             children = self.expandAndReturnChildren(frontier[0])
             frontier[0].addChildren(children)
             # Put the first element of the frontier to the explored array
             explored.append(frontier[0])
+
+            temp_parent = frontier[0]
             # Delete first frontier as it is already explored
             del frontier[0]
 
@@ -113,13 +124,22 @@ class AStar:
                 # is not in any of the states in the Nodes of the frontier array
                 # Meaning that it has not been explored at all
                 if not (child.state in [e.state for e in explored]) and not (child.state in [f.state for f in frontier]):
-                    # Goal test
-                    if child.state in self.goal_state:
-                        found_goal = True
-                        # Goalie is the goal node
-                        goalie = child
+                    # # Goal test
+                    # if child.state in self.goal_state:
+                    #     found_goal = True
+                    #     # Goalie is the goal node
+                    #     goalie = child
+
+                    # Perform path calculations
+                    child.g = temp_parent.g + 1
+                    child.h = self.calculateManhattanDistance(child.state, self.goal_state[0])
+                    child.f = child.g + child.h
+
                     # Append the child path to frontier for exploration
                     frontier.append(child)
+
+            # Sort the frontier by the value of f
+            frontier = sorted(frontier, key=lambda x: x.f)
 
             print("Explored: ", [e.state for e in explored])
             print("Frontier: ", [f.state for f in frontier])
