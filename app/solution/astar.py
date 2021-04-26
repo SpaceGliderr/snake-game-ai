@@ -6,9 +6,6 @@ class AStarNode:
         self.h = h
         self.f = f
         self.children = []
-        self.g = g
-        self.h = h
-        self.f = f
 
     def addChildren(self, children):
         self.children.extend(children)
