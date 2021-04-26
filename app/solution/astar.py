@@ -65,7 +65,7 @@ class AStar:
         for coord in self.getPotentialNeighbours(node.state):
             # Removed this line: and coord not in self.snake_body first
             # Trying to find the first solution first before attempting the 2nd and 3rd questions
-            if coord in self.state_space:
+            if coord in self.state_space and coord not in self.snake_body:
                 children.append(AStarNode(coord, node.state))
 
         return children
@@ -105,6 +105,11 @@ class AStar:
             if frontier[0].state == self.goal_state[0]:
                 goalie = frontier[0]
                 break
+
+            # Check for empty list
+            # if not self.goal_state:
+            #     print("GOAL STATES >>>>> ", self.goal_state)
+            #     break
 
             # Get the children paths of the first frontier element
             children = self.expandAndReturnChildren(frontier[0])
