@@ -1,9 +1,10 @@
-from math import abs
-
-class Node:
+class AStarNode:
     def __init__(self, state=None, parent=None, g=None, h=None, f=None):
         self.state = state
         self.parent = parent
+        self.g = g
+        self.h = h
+        self.f = f
         self.children = []
         self.g = g
         self.h = h
@@ -42,6 +43,7 @@ class AStar:
         print("PRIORITISED >>>>>>>> ", prioritised)
 
         return prioritised
+
 
     def calculateManhattanDistance(self, coord1, coord2):
         # We will use Manhattan Distance to calculate the h(n) value
