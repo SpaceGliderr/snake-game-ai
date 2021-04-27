@@ -10,46 +10,29 @@ class Player():
     ["Loki", "98854678"],
     ["Hela", "87654654"]
   ]
+
+  # True for A Star, False for Breadth First Search
   informed = False
 
   def __init__(self, setup):
-    # setup = {
-    #   maze_size: [int, int],
-    #   static_snake_length: bool
-    # }
     self.setup = setup
 
   def run(self, problem):
-    # problem = {
-    #   snake_locations: [[int,int],[int,int],...],
-    #   current_direction: str,
-    #   food_locations: [[int,int],[int,int],...],
-    # }
-
     print("SETUP >>>> ", self.setup)
     print("PROBLEM >>>> ", problem)
-    # bfs = BFS(problem['snake_locations'], problem['food_locations'], maze_size=self.setup['maze_size'])
-    # print("BFS >>>> ", bfs.bfs())
 
-    astar = AStar(problem['snake_locations'], problem['food_locations'], maze_size=self.setup['maze_size'])
-    print("AStar >>>> ", astar.astar())
+    # Uninformed Search Solution - Breadth First Search
+    bfs = BFS(problem['snake_locations'], problem['food_locations'], maze_size=self.setup['maze_size'])
+    solution = bfs.bfs()
 
-    # solution = bfs.bfs()
+    # Informed Search Solution - A Star Pathfinding
+    # astar = AStar(problem['snake_locations'], problem['food_locations'], maze_size=self.setup['maze_size'])
+    # solution = astar.astar()
 
-    solution = astar.astar()
+    # Array of actions (unused, not going to remove just yet)
+    # directions = "nswe"
 
-    # Array of actions
-    directions = "nswe"
-    # the following algorithm is NOT a valid algorithm
-    # it randomly generates solution that is invalid
-    # its purpose is to show you how this class will work
-    # not a guide to how to write your algorithm
-    # solution = [random.choice(directions) for step in range(random.randint(1,10))]
-    # print("SOLUTION >>>> ", solution)
-    # the following search tree is a static search tree 
-    # to show you the format of the variable 
-    # to generate a search tree that can be displayed in the frontend.
-    # you are required to generate the search tree based on your search algorithm
+    # Generates search tree
     search_tree = [
       {
         "id": 1,
