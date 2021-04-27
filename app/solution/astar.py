@@ -106,11 +106,6 @@ class AStar:
                 goalie = frontier[0]
                 break
 
-            # Check for empty list
-            # if not self.goal_state:
-            #     print("GOAL STATES >>>>> ", self.goal_state)
-            #     break
-
             # Get the children paths of the first frontier element
             children = self.expandAndReturnChildren(frontier[0])
             frontier[0].addChildren(children)
@@ -126,12 +121,6 @@ class AStar:
                 # is not in any of the states in the Nodes of the frontier array
                 # Meaning that it has not been explored at all
                 if not (child.state in [e.state for e in explored]) and not (child.state in [f.state for f in frontier]):
-                    # # Goal test
-                    # if child.state in self.goal_state:
-                    #     found_goal = True
-                    #     # Goalie is the goal node
-                    #     goalie = child
-
                     # Perform path calculations
                     child.g = temp_parent.g + 1
                     child.h = self.calculateManhattanDistance(child.state, self.goal_state[0])
