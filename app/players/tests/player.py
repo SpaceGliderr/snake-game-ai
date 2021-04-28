@@ -22,12 +22,12 @@ class Player():
     print("PROBLEM >>>> ", problem)
 
     # Uninformed Search Solution - Breadth First Search
-    bfs = BFS(problem['snake_locations'], problem['food_locations'], maze_size=self.setup['maze_size'])
-    solution, search_tree = bfs.bfs()
+    # bfs = BFS(problem['snake_locations'], problem['food_locations'], maze_size=self.setup['maze_size'])
+    # solution, search_tree = bfs.bfs()
 
     # Informed Search Solution - A Star Pathfinding
-    # astar = AStar(problem['snake_locations'], problem['food_locations'], maze_size=self.setup['maze_size'])
-    # solution = astar.astar()
+    astar = AStar(problem['snake_locations'], problem['food_locations'], maze_size=self.setup['maze_size'])
+    solution, search_tree = astar.astar()
 
     # Array of actions (unused, not going to remove just yet)
     # directions = "nswe"
