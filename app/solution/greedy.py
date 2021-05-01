@@ -62,7 +62,7 @@ class Greedy:
         for idx, neighbour in enumerate(self.getNeighbours(node.state)):
             if neighbour[0] in range(0, self.maze_size[0]) and neighbour[1] in range(0, self.maze_size[1]) and neighbour not in self.snake_body:
                 self.number_of_nodes += 1
-                children.append(AStarNode(self.number_of_nodes, -1, neighbour, node.state, removed=False))
+                children.append(GreedyNode(self.number_of_nodes, -1, neighbour, node.state, removed=False))
                 node.addAction(self.ACTIONS_DICT["actions"][idx])
 
         return children
