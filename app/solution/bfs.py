@@ -31,21 +31,9 @@ class BFS:
         # Will return neighbouring nodes
         children = []
 
-        # [up, down, left, right] = getPotentialNeighbours(node.state)
-
         for coord in self.getPotentialNeighbours(node.state):
             if coord in self.state_space and coord not in self.snake_body:
                 children.append(Node(coord, node.state))
-
-        # for coord in self.state_space:
-        #     if coord == node.state:
-        #         children.append(Node(coord, node.state))
-            # # To check whether the last element of leaf_node equals any of the nodes in the state_space
-            # if m == node.state:
-            #     # This defines the child as the current state and the parent is the node.state
-            #     children.append(Node(n, node.state))
-            # elif n == node.state:
-            #     children.append(Node(m, node.state))
 
         return children
 
