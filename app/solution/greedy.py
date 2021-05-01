@@ -100,12 +100,12 @@ class Greedy:
         explored = []
         removed = []
         found_goal = False
-        goalie = AStarNode()
+        goalie = GreedyNode()
 
         self.number_of_nodes += 1
 
         initial_h = self.calculateManhattanDistance(self.initial_state, self.goal_state[0])
-        frontier.append(AStarNode(self.number_of_nodes, self.number_of_expansions, self.initial_state, None, initial_h, False))
+        frontier.append(GreedyNode(self.number_of_nodes, self.number_of_expansions, self.initial_state, None, initial_h, False))
 
         # Where BFS begins
         while not found_goal:
