@@ -1,4 +1,4 @@
-class Node:
+class BFSNode:
     def __init__(self, id=None, expansion_sequence=None, state=None, parent=None, removed=False):
         self.id = id
         self.expansion_sequence = expansion_sequence
