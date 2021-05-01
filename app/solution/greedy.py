@@ -23,7 +23,6 @@ class Greedy:
         # Thank you Stack Overflow <3
         # https://stackoverflow.com/questions/6618515/sorting-list-based-on-values-from-another-list
         prioritised = [dist for _, dist in sorted(zip(distances, goal_states))]
-        print("PRIORITISED >>>>>>>> ", prioritised)
 
         return prioritised
 
@@ -105,10 +104,8 @@ class Greedy:
 
         self.number_of_nodes += 1
 
-        # Initial state g cost will be 0 since it's the start node
-        # Takes the first goal node because it is the closest based on estimated cost
         initial_h = self.calculateManhattanDistance(self.initial_state, self.goal_state[0])
-        frontier.append(AStarNode(self.number_of_nodes, self.number_of_expansions, self.initial_state, None, 0, initial_h, 0 + initial_h, False))
+        frontier.append(AStarNode(self.number_of_nodes, self.number_of_expansions, self.initial_state, None, initial_h, False))
 
         # Where BFS begins
         while not found_goal:
