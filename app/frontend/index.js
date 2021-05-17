@@ -439,7 +439,7 @@ var vm = new Vue({
           this.foodLocations.splice(strFoodLocs.indexOf(strNextLoc), 1);
           if (!this.settings.saved.staticLength) this.snakeLength += 1;
           if (this.foodLocations.length == 0) { // generate food only when all food is taken
-            [...Array(this.settings.saved.foodNumber-this.foodLocations.length).keys()].forEach(() => this.generateFoodLocation());
+            this.$nextTick(() => {[...Array(this.settings.saved.foodNumber-this.foodLocations.length).keys()].forEach(() => this.generateFoodLocation())});
           }
           this.$nextTick(() => {this.logs.push("Yay! Just ate a food!")});
           this.accPoints += 1;
@@ -540,7 +540,7 @@ var vm = new Vue({
             clearInterval(this.controls.animation.id); 
             this.controls.animation.id = null;
             if (!this.controls.stepping) {
-              this.nextAgentStep();
+              this.$nextTick(() => {this.nextAgentStep();});
             }
           }
         }
