@@ -6,6 +6,9 @@ class BFS:
         self.snake_body = initial_state
         self.goal_state = goal_state # Can have multiple goal states
         self.state_space = self.initStateSpace(state_space, maze_size)
+        self.number_of_nodes = 0
+        self.number_of_expansions = 0
+        self.actions = 'nswe'
 
 
     def initStateSpace(self, state_space, maze_size):
@@ -19,8 +22,8 @@ class BFS:
 
 
     def getPotentialNeighbours(self, coord):
-        up = [coord[0], coord[1] + 1]
-        down = [coord[0], coord[1] - 1]
+        up = [coord[0], coord[1] - 1]
+        down = [coord[0], coord[1] + 1]
         left = [coord[0] - 1, coord[1]]
         right = [coord[0] + 1, coord[1]]
 
@@ -28,13 +31,23 @@ class BFS:
 
 
     def expandAndReturnChildren(self, node):
+        # Add expansion sequence
+        self.number_of_expansions += 1
+        node.expansion_sequence = self.number_of_expansions
+
         # Will return neighbouring nodes
         children = []
 
-        for coord in self.getPotentialNeighbours(node.state):
+        for idx, coord in enumerate(self.getPotentialNeighbours(node.state)):
             if coord in self.state_space and coord not in self.snake_body:
-                children.append(Node(coord, node.state))
+                self.number_of_nodes += 1
+                children.append(Node(self.number_of_nodes, -1, coord, node.state, False))
+                node.addAction(self.actions[idx])
+            # else:
+            #     # -1 because it is not expanded on, therefore don't need expansion sequence
+            #     children.append(Node(self.number_of_nodes, -1, coord, node.state, True))
 
+        # Filter to return children that are False (not removed path)
         return children
 
 
@@ -55,15 +68,46 @@ class BFS:
         return solution_actions
 
 
+    def getParentId(self, parent_state, explored):
+        for e in explored:
+            if e.state == parent_state:
+                return e.id
+        return None
+
+
+    def returnSearchTree(self, explored):
+        search_tree = []
+
+        # Recreate search tree
+        for e in explored:
+            # print("EXPLORED >>>> ", ','.join(str(v) for v in e.state))
+            tree_node = {
+                "id": e.id,
+                "state": ','.join(str(v) for v in e.state),
+                "expansionsequence": e.expansion_sequence,
+                "children": [child.id for child in e.children],
+                "actions": e.actions,
+                "removed": e.removed,
+                "parent": self.getParentId(e.parent, explored) # search for parent ID
+            }
+
+            search_tree.append(tree_node)
+
+        return search_tree
+
+
     def bfs(self):
         frontier = []
         explored = []
+        removed = []
         found_goal = False
         goalie = Node()
 
+        self.number_of_nodes += 1
+
         # `frontier` variable needs to append Node class
         # This is because the frontier will be storing an array of yet to visit Node states
-        frontier.append(Node(self.initial_state, None))
+        frontier.append(Node(self.number_of_nodes, self.number_of_expansions, self.initial_state, None, False))
 
         # Where BFS begins
         while not found_goal:
@@ -87,6 +131,9 @@ class BFS:
                         goalie = child
                     # Append the child path to frontier for exploration
                     frontier.append(child)
+                else:
+                    child.removed = True
+                    removed.append(child)
 
             print("Explored: ", [e.state for e in explored])
             print("Frontier: ", [f.state for f in frontier])
@@ -106,5 +153,6 @@ class BFS:
 
         print("SOLUTION >>>>> ", solution)
         print("ACTIONS >>>>> ", self.recreateSolutionPath(solution))
+        print("SEARCH TREE >>>>> ", self.returnSearchTree(explored + frontier + removed))
 
-        return self.recreateSolutionPath(solution)
+        return self.recreateSolutionPath(solution), self.returnSearchTree(explored + frontier + removed)
