@@ -128,4 +128,4 @@ class BFS:
                     goalie = e
                     break
 
-        return solution_actions, self.generateSearchTree(explored + frontier + removed)
+        return solution_actions, self.generateSearchTree(explored + frontier + removed), self.number_of_expansions
