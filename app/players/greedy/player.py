@@ -41,7 +41,7 @@ class Player():
       print("RESULT >>>> ", res)
 
       # Informed Search Solution - A Star Pathfinding
-      greedy = Greedy(problem['snake_locations'], problem['food_locations'], self.setup['maze_size'])
+      greedy = Greedy(res, problem['food_locations'], self.setup['maze_size'])
       solution, search_tree, expansions = greedy.greedy()
 
     self.steps_taken += len(solution)
