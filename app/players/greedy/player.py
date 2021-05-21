@@ -16,9 +16,6 @@ class Player():
     self.setup = setup
 
   def run(self, problem):
-    print("SETUP >>>> ", self.setup)
-    print("PROBLEM >>>> ", problem)
-
     try:
       # Informed Search Solution - A Star Pathfinding
       greedy = Greedy(problem['snake_locations'], problem['food_locations'], self.setup['maze_size'])

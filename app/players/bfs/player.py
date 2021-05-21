@@ -16,9 +16,6 @@ class Player():
     self.setup = setup
 
   def run(self, problem):
-    print("SETUP >>>> ", self.setup)
-    print("PROBLEM >>>> ", problem)
-
     try:
       # Uninformed Search Solution - Breadth First Search
       bfs = BFS(problem['snake_locations'], problem['food_locations'], self.setup['maze_size'])

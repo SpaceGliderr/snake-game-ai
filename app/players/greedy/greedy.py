@@ -20,8 +20,6 @@ class Greedy:
         for goal_state in goal_states:
             distances.append(self.calculateManhattanDistance(self.initial_state, goal_state))
 
-        # Thank you Stack Overflow <3
-        # https://stackoverflow.com/questions/6618515/sorting-list-based-on-values-from-another-list
         prioritised = [dist for _, dist in sorted(zip(distances, goal_states))]
 
         return prioritised
