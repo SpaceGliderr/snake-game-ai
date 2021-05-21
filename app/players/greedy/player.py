@@ -17,7 +17,7 @@ class Player():
 
   def run(self, problem):
     try:
-      # Informed Search Solution - A Star Pathfinding
+      # Informed Search Solution - Greedy Best-First Search
       greedy = Greedy(problem['snake_locations'], problem['food_locations'], self.setup['maze_size'])
       solution, search_tree = greedy.greedy()
     except IndexError:
@@ -25,10 +25,11 @@ class Player():
       # Means that the solution can't be found, and all possible coordinates are explored already
       # Take the tail as the new goal state to ensure that the snake continues moving / will potentially find a path to the food
       problem['food_locations'].append(problem['snake_locations'][-1])
-      del problem['snake_locations'][-1]
+      k_value = int(len(problem['snake_locations']) / 4)
+      res = problem['snake_locations'][: len(problem['snake_locations']) - k_value]
 
-      # Informed Search Solution - A Star Pathfinding
-      greedy = Greedy(problem['snake_locations'], problem['food_locations'], self.setup['maze_size'])
+      # Informed Search Solution - Greedy Best-First Search
+      greedy = Greedy(res, problem['food_locations'], self.setup['maze_size'])
       solution, search_tree = greedy.greedy()
 
     return solution, search_tree

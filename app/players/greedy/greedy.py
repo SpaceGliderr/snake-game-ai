@@ -4,7 +4,7 @@ class Greedy:
     def __init__(self, initial_state, goal_state, maze_size):
         self.initial_state = initial_state[0]
         self.snake_body = initial_state
-        self.goal_state = goal_state
+        self.goal_state = self.prioritiseGoalStates(goal_state)
         self.maze_size = maze_size
         self.number_of_nodes = 0
         self.number_of_expansions = 0
@@ -15,12 +15,17 @@ class Greedy:
 
 
     def prioritiseGoalStates(self, goal_states):
+        if len(goal_states) == 1:
+            return goal_states
+
         # Prioritising states is needed to calculate the heuristic to the closest goal node
         distances = []
         for goal_state in goal_states:
             distances.append(self.calculateManhattanDistance(self.initial_state, goal_state))
 
         prioritised = [dist for _, dist in sorted(zip(distances, goal_states))]
+
+        print("PRIO >>>> ", prioritised)
 
         return prioritised
 
@@ -105,7 +110,7 @@ class Greedy:
         initial_h = self.calculateManhattanDistance(self.initial_state, self.goal_state[0])
         frontier.append(GreedyNode(self.number_of_nodes, self.number_of_expansions, self.initial_state, None, initial_h, False))
 
-        # Where BFS begins
+        # Where G-BFS begins
         while not found_goal:
             # Goal test before expansion
             if frontier[0].state == self.goal_state[0]:
