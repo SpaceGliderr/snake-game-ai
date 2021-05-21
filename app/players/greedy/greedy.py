@@ -25,8 +25,6 @@ class Greedy:
 
         prioritised = [dist for _, dist in sorted(zip(distances, goal_states))]
 
-        print("PRIO >>>> ", prioritised)
-
         return prioritised
 
 
