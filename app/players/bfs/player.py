@@ -25,24 +25,28 @@ class Player():
     print("NODES_EXPANDED >>>> ", self.nodes_expanded)
     print("ROUNDS >>>> ", self.rounds)
 
-    try:
-      # Uninformed Search Solution - Breadth First Search
-      bfs = BFS(problem['snake_locations'], problem['food_locations'], self.setup['maze_size'])
-      solution, search_tree, expansions = bfs.bfs()
+    # Uninformed Search Solution - Breadth First Search
+    bfs = BFS(problem['snake_locations'], problem['food_locations'], self.setup['maze_size'])
+    solution, search_tree, expansions = bfs.bfs()
 
-    except IndexError:
-      # Catch Index out of Bounds problem
-      # Means that the solution can't be found, and all possible coordinates are explored already
-      # Take the tail as the new goal state to ensure that the snake continues moving / will potentially find a path to the food
-      problem['food_locations'].append(problem['snake_locations'][-1])
-      k_value = int(len(problem['snake_locations'])/4)
-      # del problem['snake_locations'][-1]
-      res = problem['snake_locations'][: len(problem['snake_locations']) - k_value]
-      print("RESULT >>>> ", res)
-
-      # Uninformed Search Solution - Breadth First Search
-      bfs = BFS(res, problem['food_locations'], self.setup['maze_size'])
-      solution, search_tree, expansions = bfs.bfs()
+    # try:
+    #   # Uninformed Search Solution - Breadth First Search
+    #   bfs = BFS(problem['snake_locations'], problem['food_locations'], self.setup['maze_size'])
+    #   solution, search_tree, expansions = bfs.bfs()
+    #
+    # except IndexError:
+    #   # Catch Index out of Bounds problem
+    #   # Means that the solution can't be found, and all possible coordinates are explored already
+    #   # Take the tail as the new goal state to ensure that the snake continues moving / will potentially find a path to the food
+    #   problem['food_locations'].append(problem['snake_locations'][-1])
+    #   k_value = int(len(problem['snake_locations'])/4)
+    #   # del problem['snake_locations'][-1]
+    #   res = problem['snake_locations'][: len(problem['snake_locations']) - k_value]
+    #   print("RESULT >>>> ", res)
+    #
+    #   # Uninformed Search Solution - Breadth First Search
+    #   bfs = BFS(res, problem['food_locations'], self.setup['maze_size'])
+    #   solution, search_tree, expansions = bfs.bfs()
 
     self.steps_taken += len(solution)
     self.nodes_expanded += expansions
