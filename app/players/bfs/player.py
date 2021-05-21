@@ -1,7 +1,7 @@
 from .bfs import BFS
 
 class Player():
-  name = "Breadth First Search"
+  name = "bfs"
   group = "Jimmy Neurons"
   members = [
     ["Nicholas Lee Choon Sin", "18073957"],

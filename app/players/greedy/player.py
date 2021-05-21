@@ -1,7 +1,7 @@
 from .greedy import Greedy
 
 class Player():
-  name = "Greedy Best First Search"
+  name = "greedy"
   group = "Jimmy Neurons"
   members = [
     ["Nicholas Lee Choon Sin", "18073957"],
